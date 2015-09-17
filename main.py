@@ -6,7 +6,7 @@ from numpy.random import permutation as pm
 from numpy import arange
 from networkx import DiGraph as DG
 #from lifelines.statistics import logrank_test
-from plotting import plot_kmf
+#from plotting import plot_kmf
 
 #def sides():
 
@@ -124,3 +124,7 @@ def get_description(groups, nnode):
             s += ''.join([groups.get_edge_data(parent, nnode)['level'], '\n'])
         nnode = parent
     return s
+
+
+def select_binary_groups(groups):
+    pass
