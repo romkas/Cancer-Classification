@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 from Queue import Queue as Q
 from numpy import arange
+from networkx import draw_networkx, draw_networkx_edge_labels
 
 def plot_kmf(group, dsc):
     def get_pos_textbox(group):
