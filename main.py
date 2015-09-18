@@ -7,6 +7,7 @@ from numpy import arange
 from networkx import DiGraph as DG
 #from lifelines.statistics import logrank_test
 #from plotting import plot_kmf
+from Queue import Queue
 
 #def sides():
 
@@ -114,11 +115,11 @@ def get_group(groups, nnode):
     return groups.node[nnode]['content']
 
 
-def get_description(groups, nnode):
+def get_description(groups, nnode, root='0'):
     s = ''
-    while nnode != '0':
+    while nnode != root:
         parent = groups.predecessors(nnode)[0]
-        if parent == '0':
+        if parent == root:
             s += groups.get_edge_data(parent, nnode)['level']
         else:
             s += ''.join([groups.get_edge_data(parent, nnode)['level'], '\n'])
@@ -126,5 +127,47 @@ def get_description(groups, nnode):
     return s
 
 
-def select_binary_groups(groups):
-    pass
+def select_binary_groups(groups, root='0'):
+    def get_bin_group(grps, bin_grps, rt, graph):
+        """
+        stack = [root]
+        g = DG()
+        g.add_node(root)
+        while stack:
+            node = stack.pop()
+            successors = groups.successors(node)
+            successors.sort()
+            if not successors:
+                yield DG(g)
+            elif len(successors) == 2:
+                stack.extend(successors)
+            else:
+                for i in xrange(0, len(successors) / 2, 2):
+                    g_copy
+        """
+        level = grps.successors(rt)
+        if not level:
+            bin_grps.append(graph)
+            return bin_grps
+        elif len(level) == 2:
+            graph.add_nodes_from(level)
+            graph.add_edges_from([(rt, level[0]), (rt, level[1])])
+            if grps.successors(level[0]):
+                get_bin_group(grps, bin_grps, rt=level[0], graph=graph)
+            else:
+                get_bin_group(grps, bin_grps, rt=level[1], graph=graph)
+        else:
+            level.sort()
+            for i in xrange(0, len(level), 2):
+                g = DG(graph)
+                g.add_nodes_from([level[i], level[i + 1]])
+                g.add_edges_from([(rt, level[i]), (rt, level[i + 1])])
+                if grps.successors(level[i]):
+                    get_bin_group(grps, bin_grps, rt=level[i], graph=g)
+                else:
+                    get_bin_group(grps, bin_grps, rt=level[i + 1], graph=g)
+
+    g = DG()
+    g.add_node(root)
+    bin_groups = []
+    return get_bin_group(groups, bin_groups, rt=root, graph=g)
