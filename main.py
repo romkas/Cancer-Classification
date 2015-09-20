@@ -7,7 +7,7 @@ from numpy import arange
 from networkx import DiGraph as DG
 #from lifelines.statistics import logrank_test
 #from plotting import plot_kmf
-from Queue import Queue
+
 
 #def sides():
 
@@ -36,8 +36,6 @@ from Queue import Queue
 #    groups = subid(sample, alpha_logrank, cov_at_level)
 #    return groups, sample, ncov, nobs
 
-fname1 = 'D:\\Copy\\CoursePaper3\\DATA\\all-2002-rg1-6-60.txt'
-fname2 = 'D:\\Copy\\CoursePaper3\\DATA\\all-2002-rg2-6-60.txt'
 
 def permute_sample(sample):
     nobs = len(sample['Rand'])
@@ -151,7 +149,8 @@ def select_binary_groups(groups, root='0'):
             return bin_grps
         elif len(level) == 2:
             graph.add_nodes_from(level)
-            graph.add_edges_from([(rt, level[0]), (rt, level[1])])
+            graph.add_edge(rt, level[0], grps.get_edge_data(rt, level[0]))
+            graph.add_edge(rt, level[1], grps.get_edge_data(rt, level[1]))
             if grps.successors(level[0]):
                 get_bin_group(grps, bin_grps, rt=level[0], graph=graph)
             else:
@@ -161,7 +160,8 @@ def select_binary_groups(groups, root='0'):
             for i in xrange(0, len(level), 2):
                 g = DG(graph)
                 g.add_nodes_from([level[i], level[i + 1]])
-                g.add_edges_from([(rt, level[i]), (rt, level[i + 1])])
+                g.add_edge(rt, level[i], grps.get_edge_data(rt, level[i]))
+                g.add_edge(rt, level[i + 1], grps.get_edge_data(rt, level[i + 1]))
                 if grps.successors(level[i]):
                     get_bin_group(grps, bin_grps, rt=level[i], graph=g)
                 else:
@@ -170,4 +170,5 @@ def select_binary_groups(groups, root='0'):
     g = DG()
     g.add_node(root)
     bin_groups = []
-    return get_bin_group(groups, bin_groups, rt=root, graph=g)
+    get_bin_group(groups, bin_grps=bin_groups, rt=root, graph=g)
+    return bin_groups
