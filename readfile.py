@@ -1,4 +1,4 @@
-import Descriptions as dsc
+import desc as dsc
 
 
 def load_data2002(fname):

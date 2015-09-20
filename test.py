@@ -1,4 +1,4 @@
-from subgroupIdentify import subgroup_identification as subid
+from subident import subgroup_identification as subid
 from plotting import plot_bin_tree
 from main import select_binary_groups
 from readfile import load_data2002
@@ -16,4 +16,4 @@ g = subid(s,a_logrank,cov_at_level)
 trees = select_binary_groups(g)
 
 for t in trees:
-    plot_bin_tree(t, node_sz=600)
+    plot_bin_tree(t, node_size=600)

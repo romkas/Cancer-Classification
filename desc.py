@@ -26,6 +26,9 @@ min_sub_size = 100
 min_time_research = 50
 num_split_at_level = 5
 
+node_content = 'content'
+edge_content = 'label'
+
 """
 covLevels_2002 = [
     [],

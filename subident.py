@@ -1,87 +1,53 @@
-import Descriptions as dsc
+import desc as dsc
 import splitClass as sc
 import statTests as stat
 from math import fabs
 from math import sqrt
-from math import pow
 from scipy.stats import norm
 import networkx as nx
 
+
 root = '0'
 
+
 def subgroup_identification(sample, a_logrank, cov_at_level):
-
-#    def set_graph(subgr_graph, covs):
-#        for k in xrange(len(covs)):
-#            subgr_graph.add_node('cov-%d' % (k + 1))
-#        return subgr_graph
-
     subgroups = nx.DiGraph()
-    cov_used = {key : val for key in sample.keys() for val in [False]}
-#    set_graph(subgroups, covariates)
+    cov_used = {key: val for key in sample.keys() for val in [False]}
     subgroups.add_node(root)
     sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, parent=root, recurs_level=1)
-
     return subgroups
 
 
+def get_group(groups, node_name):
+    return groups.node[node_name][dsc.node_content]
+
+
 def sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, parent, recurs_level):
-#    def print_kmc(group):
-#        x_axis = group.kmf1.plot()
-#        group.kmf2.plot(ax=x_axis)
-#        return
+    def sort_by_p_val(itm):
+        return itm[-1]
 
-    def sort_by_p_val(item):
-        return item[-1]
-
-    def merge(group, group0):
-        group0.extend(group)
-        group0.sort(key=sort_by_p_val)
-        k = len(group0)
+    def merge(grp, grp0):
+        grp0.extend(grp)
+        grp0.sort(key=sort_by_p_val)
+        k = len(grp0)
         while k > cov_at_level:
-            group0.pop()
+            grp0.pop()
             k -= 1
         return
-#        if group == []:
-#            return
-#        if group0 == []:
-#            group0 = group.copy()
-#            return
-#        group_copy = []
-#        i, j = 0, 0
-#        while i < len(group) and j < len(group0):
-#            if group[i][-1] < group0[j][-1]:
-#                group_copy.append(group[i])
-#                i += 1
-#            else:
-#                group_copy.append(group0[j])
-#                j += 1
-#            if len(group_copy) >= dsc.num_split_at_level:
-#                break
-#        while i < len(group):
-#            group_copy.append(group[i])
-#            i += 1
-#        while j < len(group0):
-#            group_copy.append(group0[j])
-#            j += 1
-#        return
 
-    def create_node_name(recurs_level, num_node, mode):
+    def create_node_name(rec_lvl, num_nd, mode):
         if not (mode == 'left' or mode == 'right'):
             exit('creat_node_name() error')
-        return '-'.join([str(recurs_level), str(num_node), mode])
+        return '-'.join([str(rec_lvl), str(num_nd), mode])
 
-    def better_group(group1, group2):
-        return 1 if group1.res_logrank.p_value < group2.res_logrank.p_value else -1
+    def better_group(grp1, grp2):
+        return 1 if grp1.logrank.p_value < grp2.logrank.p_value else -1
 
-    def select_subsample(sample, group_inds):
-        subsample = {key : val for key in sample.keys() for val in [[]]}
-        for cov in subsample.keys():
-            subsample[cov] = [sample[cov][i] for i in xrange(len(sample[cov])) if i in group_inds]
-        return subsample
-
-    def get_group(subgroups, nname):
-        return subgroups.node[nname]['content']
+    def select_subsample(samp, group_inds):
+        subsamp = {key: val for key in samp.keys() for val in [[]]}
+        for cov in subsamp.keys():
+            subsamp[cov] = [samp[cov][i] for i in xrange(len(samp[cov])) if i in group_inds]
+        return subsamp
 
     group0 = []
     for cov_name, val in cov_used.items():
@@ -89,56 +55,50 @@ def sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, parent, recu
                or cov_name == dsc.covariates2002[1]\
                or cov_name == dsc.covariates2002[2]:
             continue
-#        group1, group2 - lists
-#        level - string of descriptio n
         group = select_best_k_splits(sample, cov_name, a_logrank, cov_at_level)
-#        group.sort(key=sort_by_p_val)
         merge(group, group0)
-#        for i in xrange(dsc.num_split_at_level):
-#            print_kmc(group[i][0])
-#            print_kmc(group[i][1])
     gamma = select_cont_param()
     better = []
     groups_next = []
     cov_next = []
-    for item in enumerate(group0):
-        name1, name2 = create_node_name(recurs_level, item[0], 'left'), create_node_name(recurs_level, item[0], 'right')
-        subgroups.add_node(name1, content=item[1][0])
-        subgroups.add_edge(parent, name1, level=item[1][1])
-        subgroups.add_node(name2, content=item[1][2])
-        subgroups.add_edge(parent, name2, level=item[1][3])
+    for i, split in enumerate(group0):
+        name1, name2 = create_node_name(recurs_level, i, 'left'), create_node_name(recurs_level, i, 'right')
+        subgroups.add_node(name1, {dsc.node_content: split[0]})
+        subgroups.add_edge(parent, name1, {dsc.edge_content: split[1]})
+        subgroups.add_node(name2, {dsc.node_content: split[2]})
+        subgroups.add_edge(parent, name2, {dsc.edge_content: split[3]})
         better.append(
-            name1 if better_group(subgroups.node[name1]['content'], subgroups.node[name2]['content']) > 0 else name2
+            name1 if better_group(get_group(subgroups, name1), get_group(subgroups, name2)) > 0 else name2
         )
         if parent == root:
-            groups_next.append(better[item[0]])
-            cov_next.append(item[1][4])
+            groups_next.append(better[i])
+            cov_next.append(split[4])
         else:
-            if continuation_criterion(get_group(subgroups, better[item[0]]), get_group(subgroups, parent), gamma):
-                groups_next.append(better[item[0]])
-                cov_next.append(item[1][4])
+            if continuation_criterion(get_group(subgroups, better[i]), get_group(subgroups, parent), gamma):
+                groups_next.append(better[i])
+                cov_next.append(split[4])
     for i in xrange(len(groups_next)):
-#        group_tmp = get_group(subgroups, groups_next[i])
         subsample = select_subsample(sample, get_group(subgroups, groups_next[i]).group)
         new_cov_used = cov_used.copy()
         new_cov_used[cov_next[i]] = True
         sub_ident(subsample, subgroups, new_cov_used, a_logrank, cov_at_level, [i], recurs_level + 1)
-
     return subgroups
 
 
 def continuation_criterion(current, parent, gamma):
-    return current.res_logrank.p_value <= gamma * parent.res_logrank.p_value
+    return current.logrank.p_value <= gamma * parent.logrank.p_value
+
 
 def select_cont_param():
     return 1
 
-def select_best_k_splits(s, cov, a_logrank, cov_at_level):
-    #returning values:
-    #group = [ tuple(group1, desc1, group2, desc2, cov_name, p_value_split), ... ]
 
-    def get_cov_values(s, cov):
-        return tuple(set(s[cov]))
+def select_best_k_splits(sample, cov_name, a_logrank, cov_at_level):
+    # returning values:
+    # group = [ tuple(group1, desc1, group2, desc2, cov_name, p_value_split), ... ]
+
+    def get_cov_values(samp, cov):
+        return tuple(set(samp[cov]))
 
 #    def get_num_splits(cov_name, values):
 #        if cov_name == 'Sex' or cov_name == 'Mediastinum' or cov_name == 'CNS':
@@ -150,159 +110,147 @@ def select_best_k_splits(s, cov, a_logrank, cov_at_level):
 #        else:
 #            exit('get_num_splits() error')
 
-
-    def make_split(smp, cov_name, values):
-        if cov_name == 'Sex':
-            left, right = [i for i in xrange(len(smp[cov_name])) if smp[cov_name][i] == 1],\
-                          [i for i in xrange(len(smp[cov_name])) if smp[cov_name][i] == 2]
-            yield left, right, 'Male', 'Female'
-        elif cov_name == 'Immun':
-            immunB, immunT = values[:len(values) / 2], values[len(values) / 2:]
-            for k in xrange(1, 2 ** len(immunB)):
-                left, right = [], []
+    def make_split(samp, cov, vals):
+        if cov == 'Sex':
+            l, r = [j for j in xrange(len(samp[cov])) if samp[cov][j] == 1],\
+                   [j for j in xrange(len(samp[cov])) if samp[cov][j] == 2]
+            yield l, r, 'Male', 'Female'
+        elif cov == 'Immun':
+            immun_b, immun_t = vals[:len(vals) / 2], vals[len(vals) / 2:]
+            for k in xrange(1, 2 ** len(immun_b)):
+                l, r = [], []
                 s = bin(k)[2:]
-                if len(s) < len(immunB):
-                    s = "".join(['0' for i in xrange(len(immunB) - len(s))]) + s
-                level = tuple([immunB[i] for i in xrange(len(s)) if s[i] == '1'])
-                not_level = tuple([immunB[i] for i in xrange(len(s)) if s[i] == '0'])
-                for i in xrange(len(smp[cov_name])):
-                    if smp[cov_name][i] in level:
-                        right.append(i)
+                if len(s) < len(immun_b):
+                    s = "".join(['0' for j in xrange(len(immun_b) - len(s))]) + s
+                level = tuple([immun_b[j] for j in xrange(len(s)) if s[j] == '1'])
+                not_level = tuple([immun_b[j] for j in xrange(len(s)) if s[j] == '0'])
+                for j in xrange(len(samp[cov])):
+                    if samp[cov][j] in level:
+                        r.append(j)
                     else:
-                        left.append(i)
-                yield left, right, 'in %s' % (str(level)), 'in %s' % (str(not_level))
-            for k in xrange(1, 2 ** len(immunT)):
-                left, right = [], []
+                        l.append(j)
+                yield l, r, 'in %s' % (str(level)), 'in %s' % (str(not_level))
+            for k in xrange(1, 2 ** len(immun_t)):
+                l, r = [], []
                 s = bin(k)[2:]
-                if len(s) < len(immunT):
-                    s = "".join(['0' for i in xrange(len(immunT) - len(s))]) + s
-                level = tuple([immunT[i] for i in xrange(len(s)) if s[i] == '1'])
-                not_level = tuple([immunT[i] for i in xrange(len(s)) if s[i] == '0'])
-                for i in xrange(len(smp[cov_name])):
-                    if smp[cov_name][i] in level:
-                        right.append(i)
+                if len(s) < len(immun_t):
+                    s = "".join(['0' for j in xrange(len(immun_t) - len(s))]) + s
+                level = tuple([immun_t[j] for j in xrange(len(s)) if s[j] == '1'])
+                not_level = tuple([immun_t[j] for j in xrange(len(s)) if s[j] == '0'])
+                for j in xrange(len(samp[cov])):
+                    if samp[cov][j] in level:
+                        r.append(j)
                     else:
-                        left.append(i)
-                yield left, right, 'Immun = %s' % (str(level)), 'Immun = %s' % (str(not_level))
-        elif cov_name == 'CNS':
-            left, right = [i for i in xrange(len(smp[cov_name])) if smp[cov_name][i] == 1],\
-                          [i for i in xrange(len(smp[cov_name])) if smp[cov_name][i] == 2]
-            yield left, right, 'CNS = 1', 'CNS = 2'
-        elif cov_name == 'Mediastinum':
-            left, right = [i for i in xrange(len(smp[cov_name])) if smp[cov_name][i] == 1],\
-                          [i for i in xrange(len(smp[cov_name])) if smp[cov_name][i] == 2]
-            yield left, right, 'Mediastinum = 1', 'Mediastinum = 2'
-        elif cov_name == 'Age' or cov_name == 'Leuc' or cov_name == 'Leber' or cov_name == 'Milz':
-            for level in values:
-                left, right = [], []
-                for i in xrange(len(smp[cov_name])):
-                    if smp[cov_name][i] < level:
-                        left.append(i)
+                        l.append(j)
+                yield l, r, 'Immun = %s' % (str(level)), 'Immun = %s' % (str(not_level))
+        elif cov == 'CNS':
+            l, r = [j for j in xrange(len(samp[cov])) if samp[cov][j] == 1],\
+                          [j for j in xrange(len(samp[cov])) if samp[cov][j] == 2]
+            yield l, r, 'CNS = 1', 'CNS = 2'
+        elif cov == 'Mediastinum':
+            l, r = [j for j in xrange(len(samp[cov])) if samp[cov][j] == 1],\
+                          [j for j in xrange(len(samp[cov])) if samp[cov][j] == 2]
+            yield l, r, 'Mediastinum = 1', 'Mediastinum = 2'
+        elif cov == 'Age' or cov == 'Leuc' or cov == 'Leber' or cov == 'Milz':
+            for level in vals:
+                l, r = [], []
+                for j in xrange(len(samp[cov])):
+                    if samp[cov][j] < level:
+                        l.append(j)
                     else:
-                        right.append(i)
-                yield left, right, '%s >= %f' % (cov_name, level), '%s < %f' % (cov_name, level)
+                        r.append(j)
+                yield l, r, '%s >= %f' % (cov, level), '%s < %f' % (cov, level)
         else:
             exit('make_split() error')
 
-    def convert_data(out):
-        censor = [i for i in xrange(len(out)) if out[i] == 0 or out[i] == 1]
-        conv_out = [True for x in out]
+    def convert_data(outcm):
+        # 0 - patient is alive, 1 - data lost
+        censor = [j for j in xrange(len(outcm)) if outcm[j] == 0 or outcm[j] == 1]
+        convert_outcm = [True for x in outcm]
         for j in censor:
-            conv_out[j] = False
-        return conv_out
+            convert_outcm[j] = False
+        return convert_outcm
 
-    def sep_treats(out, time, treat, treat_type):
-        return [out[i] for i in xrange(len(out)) if treat[i] == treat_type[0]],\
-               [time[i] for i in xrange(len(out)) if treat[i] == treat_type[0]],\
-               [out[i] for i in xrange(len(out)) if treat[i] == treat_type[1]],\
-               [time[i] for i in xrange(len(out)) if treat[i] == treat_type[1]]
+    def sep_treats(outcm, tm, trt, trt_type):
+        return [outcm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[0]],\
+               [tm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[0]],\
+               [outcm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[1]],\
+               [tm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[1]]
 
-    def add_split(splits, other_split):
+    def add_split(splts, other_splt):
         pos = -1
         j = 0
-        while j < len(splits):
-            if splits[j][-1] > other_split[-1]:
+        while j < len(splts):
+            if splts[j][-1] > other_splt[-1]:
                 pos = j
                 break
             j += 1
         if pos == -1:
-            splits.append(other_split)
+            splts.append(other_splt)
         else:
-            splits.insert(pos, other_split)
-        return splits
+            splts.insert(pos, other_splt)
+        return splts
 
 #    def adjust_pval(p_split, num_splits):
 #        return 1 - pow(1 - p_split, num_splits)
 
-    treat = s[dsc.covariates2002[0]]
-    out = s[dsc.covariates2002[1]]
-    t = s[dsc.covariates2002[2]]
-    ttype = sorted(list(set(treat)))
+    treatment = sample[dsc.covariates2002[0]]  # Rand - protocol
+    outcome = sample[dsc.covariates2002[1]]  # Tod - alive, lost, dead
+    time = sample[dsc.covariates2002[2]]  # Time - lifetime
+    treatment_type = sorted(list(set(treatment)))
     best_k_splits = []
-#    p_split0 = None
-#    kmf11_0, kmf12_0, kmf21_0, kmf22_0 = None, None, None, None
-#    left0, right0 = None, None
-#    res1_0, res2_0 = None, None
-#    pow1_0, pow2_0 = None, None
-#    desc_left0, desc_right0 = None, None
-    cov_values = get_cov_values(s, cov)
+    cov_values = get_cov_values(sample, cov_name)
     if len(cov_values) == 1:
         return best_k_splits
-    for left, right, desc_left, desc_right in make_split(s, cov, cov_values):
+    for left, right, desc_left, desc_right in make_split(sample, cov_name, cov_values):
         if len(left) < dsc.min_sub_size or len(right) < dsc.min_sub_size:
             continue
         group1, group2 = sc.Subgroup(), sc.Subgroup()
-        treat1, treat2 = [treat[i] for i in left], [treat[i] for i in right]
-        outs1, outs2 = [out[i] for i in left], [out[i] for i in right]
-        time1, time2 = [t[i] for i in left], [t[i] for i in right]
-        conv_outs1, conv_outs2 = convert_data(outs1), convert_data(outs2)
-        out11, t11, out12, t12 = sep_treats(conv_outs1, time1, treat1, ttype)
-        out21, t21, out22, t22 = sep_treats(conv_outs2, time2, treat2, ttype)
-        kmf11 = stat.kaplan_meier(out11, t11, ttype[0])
-        kmf12 = stat.kaplan_meier(out12, t12, ttype[1])
-        kmf21 = stat.kaplan_meier(out21, t21, ttype[0])
-        kmf22 = stat.kaplan_meier(out22, t22, ttype[1])
-        surv11 = kmf11.survival_function_.get_values()[-2][0]
-        surv12 = kmf12.survival_function_.get_values()[-2][0]
-        surv21 = kmf21.survival_function_.get_values()[-2][0]
-        surv22 = kmf22.survival_function_.get_values()[-2][0]
+        treat1, treat2 = [treatment[i] for i in left], [treatment[i] for i in right]
+        out1, out2 = [outcome[i] for i in left], [outcome[i] for i in right]
+        time1, time2 = [time[i] for i in left], [time[i] for i in right]
+        convert_out1, convert_out2 = convert_data(out1), convert_data(out2)
+        out11, t11, out12, t12 = sep_treats(convert_out1, time1, treat1, treatment_type)
+        out21, t21, out22, t22 = sep_treats(convert_out2, time2, treat2, treatment_type)
+        kmf11 = stat.kaplan_meier(out11, t11, treatment_type[0])
+        kmf12 = stat.kaplan_meier(out12, t12, treatment_type[1])
+        kmf21 = stat.kaplan_meier(out21, t21, treatment_type[0])
+        kmf22 = stat.kaplan_meier(out22, t22, treatment_type[1])
+        surv11 = stat.get_kmf_survival(kmf11)
+        surv12 = stat.get_kmf_survival(kmf12)
+        surv21 = stat.get_kmf_survival(kmf21)
+        surv22 = stat.get_kmf_survival(kmf22)
         res1 = stat.logrank(out11, t11, out12, t12, alpha=a_logrank)
         res2 = stat.logrank(out21, t21, out22, t22, alpha=a_logrank)
         pow1 = stat.logrank_power(min(len(out11), len(out12)), surv11, surv12, alpha=a_logrank)
         pow2 = stat.logrank_power(min(len(out21), len(out22)), surv21, surv22, alpha=a_logrank)
         p_split = split_criterion(res1.test_statistic, res2.test_statistic)
-        group1.set_subgroup(left, kmf1=kmf11, tt1=ttype[0], kmf2=kmf12, tt2=ttype[1], res_logrank=res1, pwr=pow1)
-        group2.set_subgroup(right, kmf1=kmf21, tt1=ttype[0], kmf2=kmf22, tt2=ttype[1], res_logrank=res2, pwr=pow2)
-        add_split(best_k_splits, (group1, desc_left, group2, desc_right, cov, p_split))
+        group1.set_subgroup(left, kmf11, treatment_type[0], kmf12, treatment_type[1], logrank=res1, pwr=pow1)
+        group2.set_subgroup(right, kmf21, treatment_type[0], kmf22, treatment_type[1], logrank=res2, pwr=pow2)
+        add_split(best_k_splits, (group1, desc_left, group2, desc_right, cov_name, p_split))
         if len(best_k_splits) > cov_at_level:
             best_k_splits.pop()
-#            p_split0 = p_split
-#            kmf11_0, kmf12_0, kmf12_0, kmf22_0 = kmf11, kmf12, kmf21, kmf22
-#            res1_0, res2_0 = res1, res2
-#            pow1_0, pow2_0 = pow1, pow2
-#            desc_left0, desc_right0 = desc_left, desc_right
-#            left0, right0 = left, right
-#        else:
-#            if p_split < p_split0:
-#                p_split0 = p_split
-#                kmf11_0, kmf12_0, kmf21_0, kmf22_0 = kmf11, kmf12, kmf21, kmf22
-#                res1_0, res2_0 = res1, res2
-#                pow1_0, pow2_0 = pow1, pow2
-#                desc_left0, desc_right0 = desc_left, desc_right
-#                left0, right0 = left, right
-#    if p_split0 == -1 and kmf11_0 is None and kmf12_0 is None and kmf21_0 is None and kmf22_0 is None\
-#            and left0 is None and right0 is None and res1_0 is None and res2_0 is None and pow1_0 is None and pow2_0 is None\
-#            and desc_left0 is None and desc_right0 is None:
-#        exit(2)
-#    elif p_split0 == -1 or kmf11_0 is None or kmf12_0 is None or kmf21_0 is None or kmf22_0 is None\
-#            or left0 is None or right0 is None or res1_0 is None or res2_0 is None or pow1_0 is None or pow2_0 is None\
-#            or desc_left0 is None or desc_right0 is None:
-#        if pow1_0 is None or pow2_0 is None:
-#            exit(4)
-#        exit(3)
-#    group1.set_subgroup(left0, kmf11_0, kmf12_0, res1_0, pow1_0)
-#    group2.set_subgroup(right0, kmf21_0, kmf22_0, res2_0, pow2_0)
     return best_k_splits
+
+
+def split_criterion(zstat1, zstat2, mode=1):
+    def crit1(z1, z2):
+        return 2 * (1 - norm.cdf(fabs(z1 - z2) / sqrt(2)))
+
+    def crit2(z1, z2):
+        return 2 * min(1 - norm.cdf(z1), 1 - norm.cdf(z2))
+
+    def crit3(z1, z2):
+        return max(crit1(z1, z2), crit2(z1, z2))
+
+    if mode == 1:
+        f = crit1
+    elif mode == 2:
+        f = crit2
+    else:
+        f = crit3
+    return f(zstat1, zstat2)
+
 
 """
 def sub_ident(s, inds, covs, treat, outs, time, tree_h, recurs_level, parent_subgr=None):
@@ -574,24 +522,6 @@ def get_values(s, inds):
     return val_list
 """
 
-
-def split_criterion(z1, z2, mode=1):
-    def crit1(z1, z2):
-        return 2 * (1 - norm.cdf(fabs(z1 - z2) / sqrt(2)))
-
-    def crit2(z1, z2):
-        return 2 * min(1 - norm.cdf(z1), 1 - norm.cdf(z2))
-
-    def crit3(z1, z2):
-        return max(crit1(z1, z2), crit2(z1, z2))
-
-    if mode == 1:
-        f = crit1
-    elif mode == 2:
-        f = crit2
-    else:
-        f = crit3
-    return f(z1, z2)
 
 """
 def split_num(s, ind, treat, outs, time):

@@ -4,6 +4,8 @@ from lifelines.statistics import logrank_test
 from scipy.stats.distributions import norm
 from math import log
 from math import sqrt
+
+
 """
 def logrank(sample, titles, treat_types):
     posTime = titles.index('Time')
@@ -50,6 +52,11 @@ def logrank(sample, titles, treat_types):
 
     return [U[i] * U[i] / Var_U[i] for i in range(len(U))], sens
 """
+
+
+def get_kmf_survival(kmf):
+    return kmf.survival_function_.get_values()[-2][0]
+
 
 def kaplan_meier(out, t, ttype):
     def make_label(ttype, nobs):

@@ -1,7 +1,7 @@
 from readfile import load_data2002
 #import writefile as wf
 #import balancedAllocation as bAlloc
-from subgroupIdentify import subgroup_identification as subid
+from subident import subgroup_identification as subid
 from numpy.random import permutation as pm
 from numpy import arange
 from networkx import DiGraph as DG
