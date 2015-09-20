@@ -159,7 +159,7 @@ def select_best_k_splits(sample, cov_name, a_logrank, cov_at_level):
                         l.append(j)
                     else:
                         r.append(j)
-                yield l, r, '%s >= %f' % (cov, level), '%s < %f' % (cov, level)
+                yield l, r, '%s < %f' % (cov, level), '%s >= %f' % (cov, level)
         else:
             exit('make_split() error')
 
