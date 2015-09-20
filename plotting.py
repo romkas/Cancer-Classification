@@ -1,6 +1,5 @@
 from matplotlib import pyplot as plt
 from Queue import Queue
-from numpy import arange
 from networkx import draw_networkx, draw_networkx_edge_labels
 
 def plot_kmf(group, dsc):
@@ -87,7 +86,7 @@ def make_layout(groups, node_sz, root='0'):
 
 def make_edge_labels(groups):
     E = groups.edges()
-    values = [groups.get_edge_data(v[0], v[1])['content'] for v in E]
+    values = [groups.get_edge_data(v[0], v[1])['level'] for v in E]
     labels = [(E[i], values[i]) for i in xrange(len(E))]
     return {key: val for (key, val) in labels}
 
@@ -99,5 +98,5 @@ def plot_bin_tree(groups, node_sz):
     root = '0'
     pos = make_layout(groups, node_sz=node_sz, root=root)
     edge_labels = make_edge_labels(groups)
-    draw_networkx(groups, pos=pos, ax=ax, with_labels=True, node_size=node_sz)
+    draw_networkx(groups, pos=pos, ax=ax, with_labels=True, node_size=node_sz, node_shape='s')
     draw_networkx_edge_labels(groups, pos=pos, ax=ax, edge_labels=edge_labels)
