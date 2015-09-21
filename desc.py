@@ -1,16 +1,3 @@
-#covariates2002 = [
-#    ('Rand1', 'null'),
-#    ('Tod', 'null'),
-#    ('Time', 'null'),
-#    ('Sex', 'cat'),
-#    ('Immun', 'cat'),
-#    ('CNS', 'cat'),
-#    ('Mediastinum', 'cat'),
-#    ('Age', 'num'),
-#    ('Leuc', 'num'),
-#    ('Leber', 'num'),
-#    ('Milz', 'num'),
-#]
 covariates2002 = ['Rand',
                   'Tod',
                   'Time',
@@ -24,26 +11,12 @@ covariates2002 = ['Rand',
                   'Milz']
 min_sub_size = 100
 min_time_research = 50
-num_split_at_level = 5
-
+cov_at_level = 3
+a_logrank = 0.05
+root = '0'
 node_content = 'content'
 edge_content = 'label'
-
 """
-covLevels_2002 = [
-    [],
-    [],
-    [],
-    [1, 2],
-    [1, 2, 3, 5, 6, 7],
-    [1, 2],
-    [1, 2],
-    [3, 7, 12, 16],
-    [10, 15, 20, 25, 30, 35, 40],
-    [2, 4, 6, 8, 10, 12, 14],
-    [2, 4, 6, 8, 10, 12, 14, 16, 18],
-]
-
 covariates_2008 = [
     ('Rand1', 'null'),
     ('Tod', 'null'),
@@ -62,31 +35,4 @@ covariates_2008 = [
     ('Leber', 'num'),
     ('Milz', 'num'),
 ]
-
-covLevels_2008 = [
-    [],
-    [],
-    [],
-    [1, 2],
-    [0, 1],
-    [0, 1],
-    [0, 1],
-    [0, 1],
-    [0, 1],
-    [0, 1],
-    [1, 2, 3],
-    [1, 2],
-    [3, 7, 12, 16],
-    [10, 15, 20, 25, 30, 35, 40],
-    [2, 4, 6, 8, 10, 12, 14],
-    [2, 4, 6, 8, 10, 12, 14, 16, 18],
-]
-
-minSubSize = 100
-treeHeight_2002 = len(covariates_2002)
-treeHeight_2008 = len(covariates_2008)
-numBestCov = 5
-minTimeResearch = 50
-
-max_len_cov_name = len('Mediastinum')
 """

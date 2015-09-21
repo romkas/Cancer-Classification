@@ -7,33 +7,33 @@ def load_data2002(fname):
     f.close()
     if not f.closed:
         exit('file is not closed')
-    s = filter_data(sample)
-    return s, len(s['Rand']), len(s) - 3
+    return sample
 
 
-def filter_data(sample):
+def filter_data(sample, min_time_research=dsc.min_time_research):
     s = []
     s_dict = {}
+    ind_time = 2
     for i in xrange(len(sample)):
         a = [float(x) for x in sample[i]]
-        if a[dsc.covariates2002.index('Time')] >= dsc.min_time_research:
+        if a[ind_time] >= min_time_research:
             s.append(a)
-    for i in enumerate(dsc.covariates2002):
-        s_dict[i[1]] = [s[k][i[0]] for k in xrange(len(s))]
+    for i, cov_name in enumerate(dsc.covariates2002):
+        s_dict[cov_name] = [s[k][i] for k in xrange(len(s))]
     return s_dict
 
-
+"""
 def dict_convert(sample):
     s = {}
     if type(sample) == list:
-        for item in enumerate(dsc.covariates2002):
-            s[item[1]] = [sample[k][item[0]] for k in xrange(len(sample))]
+        for i, cov_name in enumerate(dsc.covariates2002):
+            s[cov_name] = [sample[k][i] for k in xrange(len(sample))]
         sample = dict(s)
     else:
         exit('to_dict() type error')
     return sample
-
-
+"""
+"""
 def to_float(sample):
     if type(sample) == dict:
         for cov in sample.keys():
@@ -44,14 +44,14 @@ def to_float(sample):
     else:
         exit('to_float() type error')
     return sample
-
-
+"""
+"""
 def remove_min_time(sample):
-    if type(sample) == dict:
-        n = len(sample[dsc.covariates2002[0]])
-    else:
-        exit('remove_min_time() error')
-    inds = [i for i in xrange(n) if sample['Time'][i] >= dsc.min_time_research]
+    rand = dsc.covariates2002[0]
+    time = dsc.covariates2002[2]
+    n = len(sample[rand])
+    inds = [i for i in xrange(n) if sample[time][i] >= dsc.min_time_research]
     for cov in sample:
         sample[cov] = [sample[cov][k] for k in inds]
     return sample
+"""

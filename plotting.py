@@ -3,6 +3,23 @@ from Queue import Queue
 from networkx import draw_networkx, draw_networkx_edge_labels
 import desc as dsc
 
+
+def get_edge_label(groups, u, v):
+    return groups.get_edge_data(u, v)[dsc.edge_content]
+
+
+def get_description(groups, node, root=dsc.root):
+    s = ''
+    while node != root:
+        parent = groups.predecessors(node)[0]
+        if parent == root:
+            s += get_edge_label(groups, parent, node)
+        else:
+            s += ''.join([get_edge_label(groups, parent, node), '\n'])
+        node = parent
+    return s
+
+
 def plot_kmf(group, desc):
     def get_pos_textbox(grp):
         max_obs = max(grp.get_time_last_obs())
@@ -23,7 +40,7 @@ def plot_kmf(group, desc):
     ax.set_ylim(ylim_bot, ylim_top)
 
 
-def make_layout(groups, node_size, root='0'):
+def make_layout(groups, node_size, root=dsc.root):
     def calc_pos_current_node(pos_parent, node_sz, sd):
         # sd == -1 if left; == 1 if right
         def calc_step_down(nd_sz):
@@ -53,10 +70,6 @@ def make_layout(groups, node_size, root='0'):
     return pos
 
 
-def get_edge_label(groups, u, v):
-    return groups.get_edge_data(u, v)[dsc.edge_content]
-
-
 def make_edge_labels(groups):
     e = groups.edges()
     values = [get_edge_label(groups, u, v) for u, v in e]
@@ -64,11 +77,10 @@ def make_edge_labels(groups):
     return {key: val for (key, val) in labels}
 
 
-def plot_bin_tree(groups, node_size):
+def plot_bin_tree(groups, node_size, with_labels=False, node_shape='s'):
     plt.figure()
     ax = plt.subplot(111)
-    root = '0'
-    pos = make_layout(groups, node_size=node_size, root=root)
+    pos = make_layout(groups, node_size=node_size, root=dsc.root)
     edge_labels = make_edge_labels(groups)
-    draw_networkx(groups, pos=pos, ax=ax, with_labels=True, node_size=node_size, node_shape='s')
+    draw_networkx(groups, pos=pos, ax=ax, with_labels=with_labels, node_size=node_size, node_shape=node_shape)
     draw_networkx_edge_labels(groups, pos=pos, ax=ax, edge_labels=edge_labels)
