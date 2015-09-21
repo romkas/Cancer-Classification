@@ -275,12 +275,13 @@ def print_group(groups, node_name, f):
 
 
 def resampling(sample,
-               out_file,
                upper, lower, step,
                alpha0, cov_at_level, min_sub_size=dsc.min_sub_size,
+               out_file=None,
                n=100):
     cutoffs = arange(upper, lower, step)
     max_cutoff = 1
+    flag = 1 if out_file is not None else 0
     for cut in cutoffs:
         print 'Cutoff = %f' % cut
         count = 0
@@ -290,14 +291,17 @@ def resampling(sample,
             groups = subgroup_identification(permute_sample(sample), cut, cov_at_level, min_sub_size)
             candidates = select_candidates(groups)
             candidates.sort()
-            f = open(out_file, 'a')
+            if flag:
+                f = open(out_file, 'a')
             for cs in candidates:
-                print_group(groups, cs, f)
+                if flag:
+                    print_group(groups, cs, f)
                 if get_group(groups, cs).logrank.is_significant:
                     count += 1
                     break
-            f.write('\n')
-            f.close()
+            if flag:
+                f.write('\n')
+                f.close()
             if count > n * alpha0:
                 break
         print ''

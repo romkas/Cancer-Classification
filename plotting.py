@@ -72,8 +72,8 @@ def make_layout(groups, node_size, root=dsc.root):
 
 def make_edge_labels(groups):
     e = groups.edges()
-    values = [get_edge_label(groups, u, v) for u, v in e]
-    labels = [(e[i], values[i]) for i in xrange(len(e))]
+    labels = [((u, v), get_edge_label(groups, u, v)) for u, v in e]
+    # labels = [(e[i], values[i]) for i in xrange(len(e))]
     return {key: val for (key, val) in labels}
 
 
