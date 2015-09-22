@@ -9,13 +9,13 @@ def get_edge_label(groups, u, v):
 
 
 def get_description(groups, node, root=dsc.root):
-    s = ''
+    s = u''
     while node != root:
         parent = groups.predecessors(node)[0]
         if parent == root:
-            s += get_edge_label(groups, parent, node)
+            s += unicode(get_edge_label(groups, parent, node))
         else:
-            s += ''.join([get_edge_label(groups, parent, node), '\n'])
+            s += unicode(''.join([get_edge_label(groups, parent, node), ' ; ']))
         node = parent
     return s
 
@@ -33,7 +33,7 @@ def plot_kmf(group, desc):
     group.kmf1.plot(ax=ax, ci_show=False)
     group.kmf2.plot(ax=ax, ci_show=False)
     ax.set_title(desc, bbox={'facecolor': 'white', 'pad': 5})
-    s = 'p-value: %f\npower:  %f' % (group.logrank.p_value, group.pwr)
+    s = u'p-value: %f\npower:  %f' % (group.logrank.p_value, group.pwr)
     x_coord, y_coord = get_pos_textbox(group)
     ylim_top, ylim_bot = 1, max(0, min(group.get_surv()) - 0.1)
     ax.text(x_coord, y_coord, s, bbox={'facecolor': 'white', 'pad': 7})
