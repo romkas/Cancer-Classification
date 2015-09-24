@@ -5,7 +5,7 @@ import desc as dsc
 
 
 def get_edge_label(groups, u, v):
-    return groups.get_edge_data(u, v)[dsc.edge_content]
+    return unicode(groups.get_edge_data(u, v)[dsc.edge_content])
 
 
 def get_description(groups, node, root=dsc.root):
@@ -13,9 +13,9 @@ def get_description(groups, node, root=dsc.root):
     while node != root:
         parent = groups.predecessors(node)[0]
         if parent == root:
-            s += unicode(get_edge_label(groups, parent, node))
+            s += get_edge_label(groups, parent, node)
         else:
-            s += unicode(''.join([get_edge_label(groups, parent, node), ';']))
+            s += u''.join([get_edge_label(groups, parent, node), u';'])
         node = parent
     return s
 
@@ -31,8 +31,8 @@ def plot_kmf(group, desc):
 
     plt.figure()
     ax = plt.subplot(111)
-    group.kmf1.plot(ax=ax, ci_show=False)
-    group.kmf2.plot(ax=ax, ci_show=False)
+    group.kmf1.plot(ax=ax, ci_show=False, linestyle='--', color='k')
+    group.kmf2.plot(ax=ax, ci_show=False, color='k')
     ax.set_title(desc, bbox={'facecolor': 'white', 'pad': 5})
     ax.legend(bbox_to_anchor=(1, 1), loc='upper right', borderaxespad=0.)
     s = u'p-value: %f\npower:   %f' % (group.logrank.p_value, group.pwr)
@@ -91,13 +91,24 @@ def make_edge_labels(groups):
     return {key: val for (key, val) in labels}
 
 
-def plot_bin_tree(groups, node_size, with_labels=False, node_shape='s'):
+def plot_bin_tree(groups, node_size=300, with_labels=False, node_shape='s'):
     plt.figure()
     ax = plt.subplot(111)
     pos = make_layout(groups, node_size=node_size, root=dsc.root)
     edge_labels = make_edge_labels(groups)
-    draw_networkx(groups, pos=pos, ax=ax, with_labels=with_labels, node_size=node_size, node_shape=node_shape)
-    draw_networkx_edge_labels(groups, pos=pos, ax=ax, edge_labels=edge_labels)
+    draw_networkx(groups,
+                  pos=pos,
+                  ax=ax,
+                  with_labels=with_labels,
+                  node_size=node_size,
+                  node_shape=node_shape,
+                  node_color='k')
+    draw_networkx_edge_labels(groups,
+                              pos=pos,
+                              ax=ax,
+                              edge_labels=edge_labels,
+                              edge_color='k',
+                              rotate=True)
     ax.set_xticks([])
     ax.set_yticks([])
     plt.show()
