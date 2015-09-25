@@ -58,7 +58,7 @@ def make_layout(groups, node_size, root=dsc.root):
     def calc_pos_current_node(pos_parent, node_sz, sd):
         # sd == -1 if left; == 1 if right
         def calc_step_down(nd_sz):
-            return 2
+            return 2.6
 
         def calc_step_side(nd_sz):
             return 1
