@@ -9,6 +9,9 @@ from numpy.random import permutation as pm
 from numpy import arange
 
 
+global_counter = 0
+
+
 def subgroup_identification(sample, mode,
                             a_logrank=desc.a_logrank,
                             cov_at_level=desc.cov_at_level,
@@ -16,8 +19,10 @@ def subgroup_identification(sample, mode,
     subgroups = DiGraph()
     cov_used = {key: val for key in sample.keys() for val in [False]}
     subgroups.add_node(desc.root)
+    global global_counter
+    global_counter = 1
     sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, min_sub_size, mode,
-                      parent=desc.root, recurs_level=1)
+              parent=desc.root, recurs_level=1)
     return subgroups
 
 
@@ -38,10 +43,10 @@ def sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, min_sub_size
             k -= 1
         return
 
-    def create_node_name(rec_lvl, num_nd, mode):
-        if not (mode == 'left' or mode == 'right'):
+    def create_node_name(rec_lvl, mod):
+        if not (mod == 'left' or mod == 'right'):
             exit('create_node_name() error')
-        return '-'.join([str(rec_lvl), str(num_nd), mode])
+        return '-'.join([str(rec_lvl), str(global_counter), mod])
 
     def better_group(grp1, grp2):
         return 1 if grp1.logrank.p_value < grp2.logrank.p_value else -1
@@ -63,8 +68,12 @@ def sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, min_sub_size
     better = []
     groups_next = []
     cov_next = []
-    for i, split in enumerate(group0):
-        name1, name2 = create_node_name(recurs_level, i, 'left'), create_node_name(recurs_level, i, 'right')
+    global global_counter
+    for split in group0:
+        name1 = create_node_name(recurs_level, 'left')
+        global_counter += 1
+        name2 = create_node_name(recurs_level, 'right')
+        global_counter += 1
         subgroups.add_node(name1, {desc.node_content: split[0]})
         subgroups.add_edge(parent, name1, {desc.edge_content: split[1]})
         subgroups.add_node(name2, {desc.node_content: split[2]})
@@ -73,11 +82,11 @@ def sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, min_sub_size
             name1 if better_group(get_group(subgroups, name1), get_group(subgroups, name2)) > 0 else name2
         )
         if parent == desc.root:
-            groups_next.append(better[i])
+            groups_next.append(better[-1])
             cov_next.append(split[4])
         else:
-            if continuation_criterion(get_group(subgroups, better[i]), get_group(subgroups, parent), gamma):
-                groups_next.append(better[i])
+            if continuation_criterion(get_group(subgroups, better[-1]), get_group(subgroups, parent), gamma):
+                groups_next.append(better[-1])
                 cov_next.append(split[4])
     for i in xrange(len(groups_next)):
         subsample = select_subsample(sample, get_group(subgroups, groups_next[i]).group)
