@@ -46,7 +46,8 @@ def sub_ident(sample, subgroups, cov_used, a_logrank, cov_at_level, min_sub_size
     def create_node_name(rec_lvl, mod):
         if not (mod == 'left' or mod == 'right'):
             exit('create_node_name() error')
-        return '-'.join([str(rec_lvl), str(global_counter), mod])
+        prefix = ''.join(['0' for x in xrange(3 - len(str(global_counter)))])
+        return '-'.join([str(rec_lvl), ''.join([prefix, str(global_counter)]), mod])
 
     def better_group(grp1, grp2):
         return 1 if grp1.logrank.p_value < grp2.logrank.p_value else -1
@@ -393,3 +394,9 @@ def select_binary_groups(groups, root=desc.root):
     bin_groups = []
     get_bin_group(groups, bin_grps=bin_groups, rt=root, graph=dg)
     return bin_groups
+
+
+def get_best2(tree):
+    nodes = list(tree.nodes())
+    nodes.sort(reverse=True)
+    return [nodes[0], nodes[1]]
