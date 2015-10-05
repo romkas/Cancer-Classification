@@ -1,6 +1,7 @@
 from matplotlib import pyplot as plt
 from Queue import Queue
-from networkx import draw_networkx, draw_networkx_edge_labels
+from networkx import draw_networkx_nodes, draw_networkx_edges, draw_networkx_edge_labels
+from math import pow
 import desc as dsc
 
 
@@ -10,17 +11,24 @@ def get_edge_label(groups, u, v):
 
 def get_description(groups, node, root=dsc.root):
     s = u''
+    count = 0
+    f = True
     while node != root:
         parent = groups.predecessors(node)[0]
         if parent == root:
             s += get_edge_label(groups, parent, node)
         else:
             s += u''.join([get_edge_label(groups, parent, node), u';'])
+        count += 1
         node = parent
+        if f and count >= 3:
+            if node != root:
+                s += u'\n'
+                f = False
     return s
 
 
-def plot_kmf(group, desc):
+def plot_kmf(group, name, desc):
     def get_pos_textbox(grp):
         # max_obs = max(grp.get_time_last_obs())
         # min_surv = min(grp.get_surv())
@@ -29,7 +37,7 @@ def plot_kmf(group, desc):
         # return x, y
         return 0.01, 0.98  # relative coords
 
-    plt.figure()
+    plt.figure(name)
     ax = plt.subplot(111)
     group.kmf1.plot(ax=ax, ci_show=False, linestyle='--', color='k')
     group.kmf2.plot(ax=ax, ci_show=False, color='k')
@@ -54,33 +62,44 @@ def plot_kmf(group, desc):
     return ax
 
 
+def get_tree_height(tree):
+    nodes = list(tree.nodes())
+    nodes.sort(reverse=True)
+    pos = 0  # 0th position is a recursion level
+    return int(nodes[0][pos])
+
+
 def make_layout(groups, node_size, root=dsc.root):
-    def calc_pos_current_node(pos_parent, node_sz, sd):
+    def calc_pos_current_node(pos_parent, level, node_sz, sd):
         # sd == -1 if left; == 1 if right
-        def calc_step_down(nd_sz):
-            return 2
+        def calc_step_down(lvl, nd_sz):
+            return pow(2., lvl)
 
-        def calc_step_side(nd_sz):
-            return 1
+        def calc_step_side(lvl, nd_sz):
+            return pow(2., lvl)
 
-        step_down = calc_step_down(node_sz)
-        step_side = calc_step_side(node_sz)
+        step_down = calc_step_down(level, node_sz)
+        step_side = calc_step_side(level, node_sz)
         x_coord = pos_parent[0] - step_side if sd < 0 else pos_parent[0] + step_side
         return x_coord, pos_parent[1] - step_down
 
     def node_location(nd):
         return -1 if nd.split('-')[2] == 'left' else 1
 
+    def node_level(nd):
+        return int(nd.split('-')[0])
+
     pos = {root: (0, 0)}
     q = Queue()
     q.put(root)
+    height = get_tree_height(groups)
     while not q.empty():
         node = q.get()
         scs = groups.successors(node)
-        for nd in scs:
-            side = -1 if node_location(nd) < 0 else 1
-            pos[nd] = calc_pos_current_node(pos[node], node_sz=node_size, sd=side)
-            q.put(nd)
+        for nod in scs:
+            pos[nod] = calc_pos_current_node(pos[node], height + 1 - node_level(nod),
+                                             node_sz=node_size, sd=node_location(nod))
+            q.put(nod)
     return pos
 
 
@@ -91,24 +110,15 @@ def make_edge_labels(groups):
     return {key: val for (key, val) in labels}
 
 
-def plot_bin_tree(groups, node_size=300, with_labels=False, node_shape='s'):
+def plot_bin_tree(groups, node_size=50, with_labels=False, node_shape='o'):
     plt.figure()
     ax = plt.subplot(111)
     pos = make_layout(groups, node_size=node_size, root=dsc.root)
-    edge_labels = make_edge_labels(groups)
-    draw_networkx(groups,
-                  pos=pos,
-                  ax=ax,
-                  with_labels=with_labels,
-                  node_size=node_size,
-                  node_shape=node_shape,
-                  node_color='k')
-    draw_networkx_edge_labels(groups,
-                              pos=pos,
-                              ax=ax,
-                              edge_labels=edge_labels,
-                              edge_color='k',
-                              rotate=True)
+    # edge_labels = make_edge_labelgit s(groups)
+    draw_networkx_nodes(groups, pos=pos, ax=ax, with_labels=with_labels, node_size=node_size, node_shape=node_shape,
+                        node_color='k')
+    draw_networkx_edges(groups, pos=pos, ax=ax, edge_color='k', arrows=False)
+    # draw_networkx_edge_labels(groups, pos=pos, ax=ax, edge_labels=edge_labels, edge_color='k', rotate=True)
     ax.set_xticks([])
     ax.set_yticks([])
     plt.show()
