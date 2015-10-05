@@ -106,6 +106,21 @@ def select_cont_param():
     return 1
 
 
+def convert_data(outcm):
+    censor = [j for j in xrange(len(outcm)) if outcm[j] == 0 or outcm[j] == 1]
+    convert_outcm = [True for x in outcm]
+    for j in censor:
+        convert_outcm[j] = False
+    return convert_outcm
+
+
+def sep_treats(outcm, tm, trt, trt_type):
+    return [outcm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[0]],\
+           [tm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[0]],\
+           [outcm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[1]],\
+           [tm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[1]]
+
+
 def select_best_k_splits(sample, cov_name, a_logrank, cov_at_level, min_sub_size, mode):
     # returning values:
     # group = [ tuple(group1, desc1, group2, desc2, cov_name, p_value_split), ... ]
@@ -207,19 +222,6 @@ def select_best_k_splits(sample, cov_name, a_logrank, cov_at_level, min_sub_size
                 yield l, r, '%s < %f' % (cov, level), '%s >= %f' % (cov, level)
         else:
             exit('make_split() error')
-
-    def convert_data(outcm):
-        censor = [j for j in xrange(len(outcm)) if outcm[j] == 0 or outcm[j] == 1]
-        convert_outcm = [True for x in outcm]
-        for j in censor:
-            convert_outcm[j] = False
-        return convert_outcm
-
-    def sep_treats(outcm, tm, trt, trt_type):
-        return [outcm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[0]],\
-               [tm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[0]],\
-               [outcm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[1]],\
-               [tm[j] for j in xrange(len(outcm)) if trt[j] == trt_type[1]]
 
     def add_split(splts, other_splt):
         pos = -1
@@ -400,3 +402,21 @@ def get_best2(tree):
     nodes = list(tree.nodes())
     nodes.sort(reverse=True)
     return [nodes[0], nodes[1]]
+
+
+def make_subgroup_from_all(sample, a_logrank=desc.a_logrank):
+    subgroup = sc.Subgroup()
+    treatment = sample[desc.covariates[0]]  # Rand - protocol
+    outcome = sample[desc.covariates[1]]  # Tod - alive, lost, dead
+    time = sample[desc.covariates[2]]  # Time - lifetime
+    treatment_type = sorted(list(set(treatment)))
+    convert_out = convert_data(outcome)
+    out1, t1, out2, t2 = sep_treats(convert_out, time, treatment, treatment_type)
+    kmf1 = stat.kaplan_meier(out1, t1, treatment_type[0])
+    kmf2 = stat.kaplan_meier(out2, t2, treatment_type[1])
+    surv1 = stat.get_kmf_survival(kmf1)
+    surv2 = stat.get_kmf_survival(kmf2)
+    res = stat.logrank(out1, t1, out2, t2, alpha=a_logrank)
+    pow = stat.logrank_power(min(len(out1), len(out2)), surv1, surv2, alpha=a_logrank)
+    subgroup.set_subgroup(range(len(sample)), kmf1, treatment_type[0], kmf2, treatment_type[1], logrank=res, pwr=pow)
+    return subgroup
