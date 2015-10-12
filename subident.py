@@ -328,9 +328,11 @@ def print_group(groups, node_name, f):
     f.write(str(get_group(groups, node_name).logrank) + '\n')
 
 
-def resampling(sample,
+def resampling(sample, mode,
                upper, lower, step,
-               alpha0, cov_at_level, min_sub_size=desc.min_sub_size,
+               alpha0=desc.a_logrank,
+               cov_at_level=desc.cov_at_level,
+               min_sub_size=desc.min_sub_size,
                out_file=None,
                n=100):
     cutoffs = arange(upper, lower, step)
@@ -342,7 +344,7 @@ def resampling(sample,
         print 'Run: ',
         for i in xrange(n):
             print '%d' % i,
-            groups = subgroup_identification(permute_sample(sample), cut, cov_at_level, min_sub_size)
+            groups = subgroup_identification(permute_sample(sample), mode, cut, cov_at_level, min_sub_size)
             candidates = select_candidates(groups)
             candidates.sort()
             if flag:
