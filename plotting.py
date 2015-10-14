@@ -69,11 +69,12 @@ def get_tree_height(tree):
     return int(nodes[0][pos])
 
 
-def make_layout(groups, node_size, root=dsc.root):
+def make_layout(groups, edge_labels, node_size, root=dsc.root):
     def calc_pos_current_node(pos_parent, level, node_sz, sd):
         # sd == -1 if left; == 1 if right
         def calc_step_down(lvl, nd_sz):
-            return pow(2., lvl)
+            # return pow(2., lvl)
+            return 10
 
         def calc_step_side(lvl, nd_sz):
             return pow(2., lvl)
@@ -110,15 +111,17 @@ def make_edge_labels(groups):
     return {key: val for (key, val) in labels}
 
 
-def plot_bin_tree(groups, node_size=50, with_labels=False, node_shape='o'):
-    plt.figure()
+def plot_bin_tree(groups, name, node_labels=False, edge_labels=False, node_size=50, node_shape='o'):
+    plt.figure(name)
     ax = plt.subplot(111)
-    pos = make_layout(groups, node_size=node_size, root=dsc.root)
-    # edge_labels = make_edge_labelgit s(groups)
-    draw_networkx_nodes(groups, pos=pos, ax=ax, with_labels=with_labels, node_size=node_size, node_shape=node_shape,
+    edge_lbs = make_edge_labels(groups)
+    pos = make_layout(groups, edge_lbs, node_size=node_size, root=dsc.root)
+    draw_networkx_nodes(groups, pos=pos, ax=ax, with_labels=node_labels, node_size=node_size, node_shape=node_shape,
                         node_color='k')
     draw_networkx_edges(groups, pos=pos, ax=ax, edge_color='k', arrows=False)
-    # draw_networkx_edge_labels(groups, pos=pos, ax=ax, edge_labels=edge_labels, edge_color='k', rotate=True)
+    if edge_labels:
+        # edge_labels = make_edge_labels(groups)
+        draw_networkx_edge_labels(groups, pos=pos, ax=ax, edge_labels=edge_labels, edge_color='k')
     ax.set_xticks([])
     ax.set_yticks([])
     plt.show()
