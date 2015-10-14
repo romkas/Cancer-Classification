@@ -168,7 +168,10 @@ def select_best_k_splits(sample, cov_name, a_logrank, cov_at_level, min_sub_size
                 for k in xrange(len(level)):
                     l, r = [j for j in xrange(len(samp[cov])) if samp[cov][j] in not_level[k]],\
                            [j for j in xrange(len(samp[cov])) if samp[cov][j] in level[k]]
-                    yield l, r, 'Immun in %s' % ('{' + str(not_level[k])[5:-2] + '}'),\
+                    # yield l, r, 'Immun in %s' % ('{' + str(not_level[k])[5:-2] + '}'),\
+                    #             'Immun-B in %s' % ('{' + str(level[k])[5:-2] + '}') if k < 4\
+                    #             else 'Immun-T in %s' % ('{' + str(level[k])[5:-2] + '}')
+                    yield l, r, 'Immun',\
                                 'Immun-B in %s' % ('{' + str(level[k])[5:-2] + '}') if k < 4\
                                 else 'Immun-T in %s' % ('{' + str(level[k])[5:-2] + '}')
             else:
@@ -219,7 +222,8 @@ def select_best_k_splits(sample, cov_name, a_logrank, cov_at_level, min_sub_size
                         l.append(j)
                     else:
                         r.append(j)
-                yield l, r, '%s < %f' % (cov, level), '%s >= %f' % (cov, level)
+                yield l, r, '%s < %.2f' % (cov, level) if level != int(level) else '%s < %d' % (cov, level),\
+                            '%s >= %.2f' % (cov, level) if level != int(level) else '%s < %d' % (cov, level)
         else:
             exit('make_split() error')
 
